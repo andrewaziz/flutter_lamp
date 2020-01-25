@@ -5,6 +5,7 @@ import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CameraCharacteristics;
 import android.os.Build;
 import android.util.Log;
 
@@ -79,10 +80,17 @@ public class LampPlugin implements MethodCallHandler {
     private void turnFlashlightOn() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             try {
+                String cameraId = null;
                 camManager = (CameraManager) _registrar.context().getSystemService(Context.CAMERA_SERVICE);
-                String cameraId = null; // Usually front camera is at 0 position.
                 if (camManager != null) {
-                    cameraId = camManager.getCameraIdList()[0];
+                    for(String id:camManager.getCameraIdList()){
+                        CameraCharacteristics cameraCharacteristics = manager.getCameraCharacteristics(id);
+                        Integer facing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING);
+                        if(facing == CameraMetadata.LENS_FACING_BACK) {
+                            cameraId = id;
+                            break;
+                        }
+                    }
                     camManager.setTorchMode(cameraId, true);
                 }
             } catch (CameraAccessException e) {
@@ -100,10 +108,17 @@ public class LampPlugin implements MethodCallHandler {
     private void turnFlashlightOff() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             try {
-                String cameraId;
+                String cameraId = null;
                 camManager = (CameraManager) _registrar.context().getSystemService(Context.CAMERA_SERVICE);
                 if (camManager != null) {
-                    cameraId = camManager.getCameraIdList()[0]; // Usually front camera is at 0 position.
+                    for(String id:camManager.getCameraIdList()){
+                        CameraCharacteristics cameraCharacteristics = manager.getCameraCharacteristics(id);
+                        Integer facing = cameraCharacteristics.get(CameraCharacteristics.LENS_FACING);
+                        if(facing == CameraMetadata.LENS_FACING_BACK) {
+                            cameraId = id;
+                            break;
+                        }
+                    }
                     camManager.setTorchMode(cameraId, false);
                 }
             } catch (CameraAccessException e) {
